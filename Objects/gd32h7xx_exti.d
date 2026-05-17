@@ -1,4 +1,4 @@
-.\objects\gd32h7xx_exti.o: ..\GD32H7图形开发板模板工程v1.0 - 副本\GD32H7xx_standard_peripheral\Source\gd32h7xx_exti.c
+.\objects\gd32h7xx_exti.o: GD32H7xx_standard_peripheral\Source\gd32h7xx_exti.c
 .\objects\gd32h7xx_exti.o: .\GD32H7xx_standard_peripheral\Include\gd32h7xx_exti.h
 .\objects\gd32h7xx_exti.o: .\GD32H7xx\gd32h7xx.h
 .\objects\gd32h7xx_exti.o: .\GD32H7xx\core_cm7.h

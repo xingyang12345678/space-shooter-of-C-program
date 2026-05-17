@@ -592,12 +592,12 @@
             <File>
               <FileName>gd32h7xx_exti.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\GD32H7图形开发板模板工程v1.0 - 副本\GD32H7xx_standard_peripheral\Source\gd32h7xx_exti.c</FilePath>
+              <FilePath>.\GD32H7xx_standard_peripheral\Source\gd32h7xx_exti.c</FilePath>
             </File>
             <File>
               <FileName>gd32h7xx_syscfg.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\GD32H7图形开发板模板工程v1.0 - 副本\GD32H7xx_standard_peripheral\Source\gd32h7xx_syscfg.c</FilePath>
+              <FilePath>.\GD32H7xx_standard_peripheral\Source\gd32h7xx_syscfg.c</FilePath>
             </File>
           </Files>
         </Group>
