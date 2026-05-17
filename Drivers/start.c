@@ -335,6 +335,8 @@ uint8_t battle_start()
 		sdram_free(boss2_buf);
 		sdram_free(boss3_buf);
 		sdram_free(boss4_buf);
+		lv_obj_clean(display_game);
+		display_game = NULL;
 		return is_over;
 }
 

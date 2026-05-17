@@ -48,6 +48,7 @@ int main()
 							display_game = lv_obj_create(NULL);
 							srand(lv_tick_get());
 							}
+					config.bullet_num = 7;
 					battle_start();
 				}
 				gaming = 0;
