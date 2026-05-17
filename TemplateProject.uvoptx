@@ -707,7 +707,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\GD32H7图形开发板模板工程v1.0 - 副本\GD32H7xx_standard_peripheral\Source\gd32h7xx_exti.c</PathWithFileName>
+      <PathWithFileName>.\GD32H7xx_standard_peripheral\Source\gd32h7xx_exti.c</PathWithFileName>
       <FilenameWithoutPath>gd32h7xx_exti.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
@@ -719,7 +719,7 @@
       <tvExp>0</tvExp>
       <tvExpOptDlg>0</tvExpOptDlg>
       <bDave2>0</bDave2>
-      <PathWithFileName>..\GD32H7图形开发板模板工程v1.0 - 副本\GD32H7xx_standard_peripheral\Source\gd32h7xx_syscfg.c</PathWithFileName>
+      <PathWithFileName>.\GD32H7xx_standard_peripheral\Source\gd32h7xx_syscfg.c</PathWithFileName>
       <FilenameWithoutPath>gd32h7xx_syscfg.c</FilenameWithoutPath>
       <RteFlg>0</RteFlg>
       <bShared>0</bShared>
