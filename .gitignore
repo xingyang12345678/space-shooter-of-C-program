@@ -1,0 +1,40 @@
+# Keil uVision build output
+Objects/
+Listings/
+*.axf
+*.bin
+*.hex
+*.elf
+*.map
+*.lst
+*.o
+*.d
+*.crf
+*.dep
+*.lnp
+*.build_log.htm
+
+# Keil uVision user/session files
+*.uvguix.*
+*.uvgui.*
+*.uvoptx
+*.uvopt
+*.uvmpw
+*.uvmpw.*
+
+# ARM/Keil temporary files
+*.bak
+*.orig
+*.tmp
+*.iex
+*.htm
+
+# Editor and OS files
+.vscode/
+.cursor/
+.idea/
+*.swp
+*.swo
+Thumbs.db
+Desktop.ini
+
