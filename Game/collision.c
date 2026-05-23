@@ -76,6 +76,25 @@ static void apply_hit(struct Enemy *e, int16_t dmg, struct Bullet *ebullet_pool)
     }
 }
 
+static void apply_boss4_player_knockback(struct Player *player, struct Enemy *boss)
+{
+    int16_t side_v = 18;
+    int16_t boss_speed = boss->v_x < 0 ? -boss->v_x : boss->v_x;
+
+    if (player->y + P_H / 2 < boss->y + BOSS4_H / 2)
+        side_v = -side_v;
+
+    player->y += side_v;
+    if (player->y < 0)
+        player->y = 0;
+    if (player->y > 540)
+        player->y = 540;
+
+    player->v_y = side_v;
+    player->v_x = -(boss_speed + 5);
+    player_knockback_timer = 4;
+}
+
 void collision_detect(struct Player *player, struct Enemy *enemy_pool,
                       struct Bullet *bullet_pool, struct Bullet *ebullet_pool,
                       struct Bullet *sbullet_pool, struct Mine *mine_pool)
@@ -200,6 +219,7 @@ void collision_detect(struct Player *player, struct Enemy *enemy_pool,
             col_sort = is_in(enemy_pool[i].x, enemy_pool[i].y, ew, eh,
                              player->x, player->y, P_W, P_H);
             if (col_sort) {
+                bool boss4_hit = enemy_pool[i].type == E_BOSS4;
                 if (player_shield_timer <= 0) {
                     if (enemy_pool[i].type == E_RAM)
                         player->health -= 50;
@@ -226,28 +246,34 @@ void collision_detect(struct Player *player, struct Enemy *enemy_pool,
                     player_mana += config.mana_kill_bonus;
                     player_score += 1;
                 }
-                switch (col_sort) {
-                case 1:
-                    player->v_y = -5; player->v_x = 5;
-                    break;
-                case 2:
-                    player->v_y = -5; player->v_x = -5;
-                    break;
-                case 3:
-                    player->v_y = 5; player->v_x = -5;
-                    break;
-                case 4:
-                    player->v_y = 5; player->v_x = 5;
-                    break;
-                default:
-                    break;
-                }
-                if (enemy_pool[i].type != E_RAM) {
+                if (boss4_hit) {
+                    apply_boss4_player_knockback(player, &enemy_pool[i]);
+										player->health -= 20;
+                } else {
+                    player_knockback_timer = 4;
                     switch (col_sort) {
-                    case 1: enemy_pool[i].v_y = 5;  enemy_pool[i].v_x = -5; break;
-                    case 2: enemy_pool[i].v_y = 5;  enemy_pool[i].v_x = 5;  break;
-                    case 3: enemy_pool[i].v_y = -5; enemy_pool[i].v_x = 5;  break;
-                    case 4: enemy_pool[i].v_y = -5; enemy_pool[i].v_x = -5; break;
+                    case 1:
+                        player->v_y = -10; player->v_x = 10;
+                        break;
+                    case 2:
+                        player->v_y = -10; player->v_x = -10;
+                        break;
+                    case 3:
+                        player->v_y = 10; player->v_x = -10;
+                        break;
+                    case 4:
+                        player->v_y = 10; player->v_x = 10;
+                        break;
+                    default:
+                        break;
+                    }
+                }
+                if (enemy_pool[i].type != E_RAM && enemy_pool[i].type != E_BOSS4) {
+                    switch (col_sort) {
+                    case 1: enemy_pool[i].v_y = 10;  enemy_pool[i].v_x = -10; break;
+                    case 2: enemy_pool[i].v_y = 10;  enemy_pool[i].v_x = 10;  break;
+                    case 3: enemy_pool[i].v_y = -10; enemy_pool[i].v_x = 10;  break;
+                    case 4: enemy_pool[i].v_y = -10; enemy_pool[i].v_x = -10; break;
                     default: break;
                     }
                 }

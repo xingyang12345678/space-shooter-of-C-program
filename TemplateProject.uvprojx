@@ -340,7 +340,7 @@
               <MiscControls>--diag_suppress=68,111,188,223,546,1295</MiscControls>
               <Define>HXTAL_VALUE=8000000,</Define>
               <Undefine></Undefine>
-              <IncludePath>.\GD32H7xx_standard_peripheral\Include;.\GD32H7xx;.\GD32H7xx\CMSIS;.;.\Drivers;.\FATFS;.\lvgl;.\lvgl\src;.\lvgl\examples\porting;.\lvgl\demos\benchmark;.\lvgl\demos\stress;.\lvgl</IncludePath>
+              <IncludePath>.\GD32H7xx_standard_peripheral\Include;.\GD32H7xx;.\GD32H7xx\CMSIS;.;.\Drivers;.\Game;.\FATFS;.\lvgl;.\lvgl\src;.\lvgl\examples\porting;.\lvgl\demos\benchmark;.\lvgl\demos\stress;.\lvgl</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -487,42 +487,42 @@
             <File>
               <FileName>battle.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\battle.c</FilePath>
+              <FilePath>.\Game\battle.c</FilePath>
             </File>
             <File>
               <FileName>battle.h</FileName>
               <FileType>5</FileType>
-              <FilePath>.\Drivers\battle.h</FilePath>
+              <FilePath>.\Game\battle.h</FilePath>
             </File>
             <File>
               <FileName>collision.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\collision.c</FilePath>
+              <FilePath>.\Game\collision.c</FilePath>
             </File>
             <File>
               <FileName>render.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\render.c</FilePath>
+              <FilePath>.\Game\render.c</FilePath>
             </File>
             <File>
               <FileName>spawn.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\spawn.c</FilePath>
+              <FilePath>.\Game\spawn.c</FilePath>
             </File>
             <File>
               <FileName>start.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\start.c</FilePath>
+              <FilePath>.\Game\start.c</FilePath>
             </File>
             <File>
               <FileName>state.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\state.c</FilePath>
+              <FilePath>.\Game\state.c</FilePath>
             </File>
             <File>
               <FileName>update.c</FileName>
               <FileType>1</FileType>
-              <FilePath>.\Drivers\update.c</FilePath>
+              <FilePath>.\Game\update.c</FilePath>
             </File>
           </Files>
         </Group>

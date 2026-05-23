@@ -219,7 +219,7 @@ uint8_t battle_start()
     player.y      = 300;
     player.v_x    = 0;
     player.v_y    = 0;
-    player.health = 200;
+    player.health = config.player_hp;
     static uint32_t last_update = 0;
     uint32_t        now         = lv_tick_get();
     init_pre_bullet();

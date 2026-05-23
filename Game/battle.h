@@ -25,6 +25,7 @@
 #define E2_W         120
 #define E2_H         60
 #define E2_BUF_SIZE  (E2_W * E2_H * 2 + 4)
+#define RAM_LANE_COUNT 6
 
 #define E3_W         120
 #define E3_H         60
@@ -64,11 +65,15 @@
 #define DISPATCH_COLS 6
 #define DISPATCH_LEN  (DISPATCH_ROWS * DISPATCH_COLS)
 
+#define BULLET_PATTERN_COUNT 2
+#define BULLET_PATTERN_STRAIGHT 0
+#define BULLET_PATTERN_SPREAD   1
+
 struct BattleConfig{
-	uint16_t bullet_num;
+	uint16_t bullet_num[BULLET_PATTERN_COUNT];
 	uint16_t bullet_damage;
-	uint16_t bullet_distirbution[7];
-	int16_t bullet_v[7][2];
+	int16_t bullet_distirbution[BULLET_PATTERN_COUNT][7];
+	int16_t bullet_v[BULLET_PATTERN_COUNT][7][2];
 	uint16_t attack_gap;
 	uint16_t seek_damage;
 	uint16_t seek_cost;
@@ -154,6 +159,8 @@ extern int16_t pre_mine[MINE_POOL][2];
 extern int16_t control_x;
 extern int16_t control_y;
 extern uint8_t key_value;
+extern uint8_t bullet_pattern;
+extern int16_t player_knockback_timer;
 
 extern int16_t enemy_num;
 extern int16_t dispatch_cursor;

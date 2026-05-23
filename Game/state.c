@@ -11,6 +11,7 @@ int16_t pre_seek[SBULLET_POOL][2];
 int16_t pre_mine[MINE_POOL][2];
 int16_t control_x   = 0;
 int16_t control_y   = 0;
+int16_t player_knockback_timer = 0;
 int16_t enemy_num         = 0;
 int16_t dispatch_cursor   = 0;
 int16_t player_mana       = 0;
@@ -20,11 +21,18 @@ int32_t round_timer       = 0;
 struct Enemy *current_boss = 0;
 extern lv_obj_t *display_game;
 uint8_t key_value;
+uint8_t bullet_pattern = BULLET_PATTERN_STRAIGHT;
 struct BattleConfig config ={
-	3, //bullet gap
+	{5, 5}, // bullet count: straight, spread
  10, //damage
- {0,-12,12,-24,24,-36,36},
-	{{30,0},{30,0},{30,0},{25,10},{25,-10},{20,15},{20,-15}},
+ {
+    {0,-12,12,-24,24,-36,36},
+    {0,-12,12,-24,24,-36,36},
+ },
+	{
+    {{30,0},{30,0},{30,0},{30,0},{30,0},{30,0},{30,0}},
+    {{30,0},{30,0},{30,0},{25,10},{25,-10},{20,15},{20,-15}},
+  },
 	5,   //attack gap
 	50,  //seek damage
 	150,   // seek_cost 
