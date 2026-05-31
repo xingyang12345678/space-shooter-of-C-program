@@ -3,9 +3,13 @@
 #include "key.h"
 #include "pause.h"
 #include "display_manager.h"
+#define BASE_GAME_FPS 10
+#define FRAME_MS(fps) (1000 / (fps))
+#define FRAME_MS_PERCENT(fps, percent) (100000 / ((fps) * (percent)))
+
 uint8_t battle_start()
 {
-		dispatch_cursor = 0;
+    //init heap memory
     uint8_t *enemy_buffer   = sdram_malloc(E_BUF_SIZE);
     uint8_t *player_buffer  = sdram_malloc(P_BUF_SIZE);
     uint8_t *player_shield_buffer = sdram_malloc(PS_BUF_SIZE);
@@ -20,17 +24,27 @@ uint8_t battle_start()
     uint8_t *boss2_buf      = sdram_malloc(BOSS2_BUF_SIZE);
     uint8_t *boss3_buf      = sdram_malloc(BOSS3_BUF_SIZE);
     uint8_t *boss4_buf      = sdram_malloc(BOSS4_BUF_SIZE);
+    void *buf = sdram_malloc(1024 * 600 * 2);
+    //reset global variables for game start
+    dispatch_cursor = 0;
     enemy_num = 0;
     player_mana = config.max_mana;
     player_shield_timer = 0;
+    player_knockback_timer = 0;
+    player_attack_timer = 0;
     player_score = 0;
     round_timer = 0;
+    control_x = 0;
+    control_y = 0;
+    key_value = 0;
+    bullet_pattern = BULLET_PATTERN_STRAIGHT;
     current_boss = 0;
-    void *buf = sdram_malloc(1024 * 600 * 2);
 
+    //define colors for rendering
     lv_color_t red   = lv_color_make(255, 10, 10);
     lv_color_t blue  = lv_color_make(10, 10, 255);
     lv_color_t green = lv_color_make(10, 255, 10);
+    //define dsc bullet
     lv_draw_rect_dsc_t circle_dsc;
     lv_draw_rect_dsc_init(&circle_dsc);
     circle_dsc.bg_color  = blue;
@@ -43,6 +57,7 @@ uint8_t battle_start()
     ebullet_dsc.bg_opa   = LV_OPA_COVER;
     ebullet_dsc.radius   = LV_RADIUS_CIRCLE;
 
+    //load player sprite
     read_file_to_array("0:/player.bin", player_buffer, P_BUF_SIZE);
     lv_img_dsc_t player_struct;
     player_struct.header.always_zero = 0;
@@ -53,6 +68,7 @@ uint8_t battle_start()
     player_struct.data_size          = P_W * P_H * 2;
     player_struct.data               = player_buffer + 4;
 
+    //load player shielded sprite
     read_file_to_array("0:/player_plane_shielded.bin", player_shield_buffer, PS_BUF_SIZE);
     lv_img_dsc_t player_shield_struct;
     player_shield_struct.header.always_zero = 0;
@@ -63,6 +79,7 @@ uint8_t battle_start()
     player_shield_struct.data_size          = PS_W * PS_H * 2;
     player_shield_struct.data               = player_shield_buffer + 4;
 
+    //load mine sprite
     read_file_to_array("0:/air_mine.bin", mine_buffer, MINE_BUF_SIZE);
     lv_img_dsc_t mine_struct;
     mine_struct.header.always_zero = 0;
@@ -73,6 +90,7 @@ uint8_t battle_start()
     mine_struct.data_size          = MINE_W * MINE_H * 2;
     mine_struct.data               = mine_buffer + 4;
 
+    //load enemy sprite
     read_file_to_array("0:/enemy.bin", enemy_buffer, E_BUF_SIZE);
     lv_img_dsc_t enemy_struct;
     enemy_struct.header.always_zero = 0;
@@ -83,6 +101,7 @@ uint8_t battle_start()
     enemy_struct.data_size          = E_W * E_H * 2;
     enemy_struct.data               = enemy_buffer + 4;
 
+    //load enemy1_shield sprite
     read_file_to_array("0:/enemy1_shield.bin", e1_shield_buf, E1_BUF_SIZE);
     lv_img_dsc_t e1_shield_struct;
     e1_shield_struct.header.always_zero = 0;
@@ -93,6 +112,7 @@ uint8_t battle_start()
     e1_shield_struct.data_size          = E1_W * E1_H * 2;
     e1_shield_struct.data               = e1_shield_buf + 4;
 
+    //load enemy1_plain sprite
     read_file_to_array("0:/enemy1_plain.bin", e1_plain_buf, E1_BUF_SIZE);
     lv_img_dsc_t e1_plain_struct;
     e1_plain_struct.header.always_zero = 0;
@@ -103,6 +123,7 @@ uint8_t battle_start()
     e1_plain_struct.data_size          = E1_W * E1_H * 2;
     e1_plain_struct.data               = e1_plain_buf + 4;
 
+    //load enemy2_ram sprite
     read_file_to_array("0:/enemy2_ram.bin", e2_ram_buf, E2_BUF_SIZE);
     lv_img_dsc_t e2_ram_struct;
     e2_ram_struct.header.always_zero = 0;
@@ -113,6 +134,7 @@ uint8_t battle_start()
     e2_ram_struct.data_size          = E2_W * E2_H * 2;
     e2_ram_struct.data               = e2_ram_buf + 4;
 
+    //load enemy3_carrier sprite
     read_file_to_array("0:/enemy3_carrier.bin", e3_carrier_buf, E3_BUF_SIZE);
     lv_img_dsc_t e3_carrier_struct;
     e3_carrier_struct.header.always_zero = 0;
@@ -123,6 +145,7 @@ uint8_t battle_start()
     e3_carrier_struct.data_size          = E3_W * E3_H * 2;
     e3_carrier_struct.data               = e3_carrier_buf + 4;
 
+    //load enemy3_minion sprite
     read_file_to_array("0:/enemy3_minion.bin", e3_minion_buf, E3M_BUF_SIZE);
     lv_img_dsc_t e3_minion_struct;
     e3_minion_struct.header.always_zero = 0;
@@ -133,6 +156,7 @@ uint8_t battle_start()
     e3_minion_struct.data_size          = E3M_W * E3M_H * 2;
     e3_minion_struct.data               = e3_minion_buf + 4;
 
+    //load boss1 sprite
     read_file_to_array("0:/boss_01_cruiser_300x151.bin", boss1_buf, BOSS1_BUF_SIZE);
     lv_img_dsc_t boss1_struct;
     boss1_struct.header.always_zero = 0;
@@ -143,6 +167,7 @@ uint8_t battle_start()
     boss1_struct.data_size          = BOSS1_W * BOSS1_H * 2;
     boss1_struct.data               = boss1_buf + 4;
 
+    //load boss2 sprite
     read_file_to_array("0:/boss_02_hive_300x206.bin", boss2_buf, BOSS2_BUF_SIZE);
     lv_img_dsc_t boss2_struct;
     boss2_struct.header.always_zero = 0;
@@ -153,6 +178,7 @@ uint8_t battle_start()
     boss2_struct.data_size          = BOSS2_W * BOSS2_H * 2;
     boss2_struct.data               = boss2_buf + 4;
 
+    //load boss3 sprite
     read_file_to_array("0:/boss_03_dragon_300x164.bin", boss3_buf, BOSS3_BUF_SIZE);
     lv_img_dsc_t boss3_struct;
     boss3_struct.header.always_zero = 0;
@@ -163,6 +189,7 @@ uint8_t battle_start()
     boss3_struct.data_size          = BOSS3_W * BOSS3_H * 2;
     boss3_struct.data               = boss3_buf + 4;
 
+    //load boss4 sprite
     read_file_to_array("0:/boss_04_prism_300x210.bin", boss4_buf, BOSS4_BUF_SIZE);
     lv_img_dsc_t boss4_struct;
     boss4_struct.header.always_zero = 0;
@@ -173,6 +200,7 @@ uint8_t battle_start()
     boss4_struct.data_size          = BOSS4_W * BOSS4_H * 2;
     boss4_struct.data               = boss4_buf + 4;
 
+    //load seek sprite
     lv_img_dsc_t seek_struct[12];
     for (int i = 0; i < 12; i++) {
         char name[24];
@@ -188,6 +216,7 @@ uint8_t battle_start()
         seek_struct[i].data               = seek_buffer + (50 * 50 * 2 + 4) * i + 4;
     }
 
+    //create canvas for rendering
     lv_obj_t *m_canva = lv_canvas_create(display_game);
     lv_obj_set_width(m_canva, 1024);
     lv_obj_set_height(m_canva, 600);
@@ -196,6 +225,7 @@ uint8_t battle_start()
     lv_canvas_set_buffer(m_canva, buf, 1024, 600, LV_IMG_CF_TRUE_COLOR);
     lv_canvas_fill_bg(m_canva, lv_color_black(), LV_OPA_COVER);
 
+    //create and init pools
     struct Enemy  enemy_pool[ENEMY_POOL];
     struct Bullet bullet_pool[BULLET_POOL];
     struct Bullet ebullet_pool[EBULLET_POOL];
@@ -214,19 +244,21 @@ uint8_t battle_start()
         mine_pool[i].is_used = 0;
     for (int16_t i = 0; i < SBULLET_POOL; i++)
         seek_objects[i] = 0;
+    //create player
     struct Player player;
     player.x      = 200;
     player.y      = 300;
     player.v_x    = 0;
     player.v_y    = 0;
     player.health = config.player_hp;
-    static uint32_t last_update = 0;
-    uint32_t        now         = lv_tick_get();
+
+    //init pre-render buffers
     init_pre_bullet();
     init_pre_ebullet();
     init_pre_enemy();
     init_pre_seek();
     init_pre_mine();
+    //create buttons for labels
     lv_obj_t *btn = lv_btn_create(display_game);
     lv_obj_set_pos(btn, 0, 0);
     lv_obj_set_width(btn, 80);
@@ -262,10 +294,38 @@ uint8_t battle_start()
     lv_obj_set_height(mana_btn, 30);
     lv_obj_t *mana_label = lv_label_create(mana_btn);
     lv_obj_set_style_text_color(mana_label, lv_color_white(), 0);
+
+    lv_obj_t *game_fps_btn = lv_btn_create(display_game);
+    lv_obj_set_pos(game_fps_btn, 480, 0);
+    lv_obj_set_width(game_fps_btn, 120);
+    lv_obj_set_height(game_fps_btn, 30);
+    lv_obj_t *game_fps_label = lv_label_create(game_fps_btn);
+    lv_obj_set_style_text_color(game_fps_label, lv_color_white(), 0);
+
+    lv_obj_t *fps_btn = lv_btn_create(display_game);
+    lv_obj_set_pos(fps_btn, 610, 0);
+    lv_obj_set_width(fps_btn, 120);
+    lv_obj_set_height(fps_btn, 30);
+    lv_obj_t *fps_label = lv_label_create(fps_btn);
+    lv_obj_set_style_text_color(fps_label, lv_color_white(), 0);
+
+    //init joystick
     joystick_init();
+    key_init();
+    //switch to game screen
     display_switch_to_game();
-		key_init();
+
+    //init game over flag
     is_over = 0;
+    //init timer
+    uint32_t last_game_update = 0;
+    uint32_t last_render = 0;
+    uint32_t fps_timer = lv_tick_get();
+    uint16_t render_count = 0;
+    uint16_t measured_render_fps = 0;
+    uint16_t game_update_count = 0;
+    uint16_t measured_game_fps = 0;
+    uint32_t now         = lv_tick_get();
     while (1) {
         Pause_HandleRequest();
         if (Pause_IsActive()) {
@@ -273,16 +333,22 @@ uint8_t battle_start()
             delay_us(5000);
             continue;
         }
-				key_value = key_read();
+        //read control input
+		key_value = key_read();
         control_x = read_stick(joystick_read_x());
         control_y = read_stick(joystick_read_y());
         now       = lv_tick_get();
-        if (now - last_update > 80) {
-					  last_update = now;
+        uint32_t game_frame_ms = FRAME_MS_PERCENT(BASE_GAME_FPS, Pause_GetGameSpeedPercent());
+        if (now - last_game_update >= game_frame_ms) {
+			last_game_update = now;
+            game_update_count++;
+            //update labels
             lv_label_set_text_fmt(score_label, "score:%d", (int)player_score);
             lv_label_set_text_fmt(health_label, "health:%d", player.health);
             lv_label_set_text_fmt(enemy_label, "enemy:%d", enemy_num);
             lv_label_set_text_fmt(mana_label, "mana:%d", player_mana);
+            lv_label_set_text_fmt(game_fps_label, "GFPS:%d", measured_game_fps);
+            lv_label_set_text_fmt(fps_label, "RFPS:%d", measured_render_fps);
             if (current_boss != 0 && current_boss->is_used) {
                 lv_label_set_text_fmt(boss_hp_label, "BOSS HP: %d/%d",
                                       current_boss->health,
@@ -291,26 +357,43 @@ uint8_t battle_start()
             } else {
                 lv_obj_add_flag(boss_btn, LV_OBJ_FLAG_HIDDEN);
             }
+            //update mana
             update_mana();
+            //dispatch enemies
             enemy_dispatcher( enemy_pool);
+            if(is_over)	break;
+            //detect collisions
             collision_detect(&player, enemy_pool, bullet_pool, ebullet_pool,
                            sbullet_pool, mine_pool);
+            //update all objects and render
             update_player(&player, bullet_pool, sbullet_pool, seek_objects, enemy_pool,
                           mine_pool);
             update_sbullet(sbullet_pool, seek_objects, enemy_pool);
-            update_enemy(enemy_pool, ebullet_pool);
+            update_enemy(enemy_pool, ebullet_pool, &player);
             update_bullet_norm(bullet_pool);
             update_ebullet_norm(ebullet_pool);
-            render(m_canva, &player, enemy_pool, bullet_pool, ebullet_pool, sbullet_pool,
-                   mine_pool, &player_struct, &player_shield_struct,
-                   &circle_dsc, &ebullet_dsc, &enemy_struct, seek_struct,
-                   &mine_struct,
-                   &e1_shield_struct, &e1_plain_struct, &e2_ram_struct,
-                   &e3_carrier_struct, &e3_minion_struct,
-                   &boss1_struct, &boss2_struct,
-                   &boss3_struct, &boss4_struct);
 						if(is_over)	break;
         }
+        if (now - last_render >= FRAME_MS(Pause_GetMaxRenderFps())) {
+                last_render = now;
+                render(m_canva, &player, enemy_pool, bullet_pool, ebullet_pool, sbullet_pool,
+                       mine_pool, &player_struct, &player_shield_struct,
+                       &circle_dsc, &ebullet_dsc, &enemy_struct, seek_struct,
+                       &mine_struct,
+                       &e1_shield_struct, &e1_plain_struct, &e2_ram_struct,
+                       &e3_carrier_struct, &e3_minion_struct,
+                       &boss1_struct, &boss2_struct,
+                       &boss3_struct, &boss4_struct);
+                render_count++;
+        }
+        if (now - fps_timer >= 1000) {
+            measured_render_fps = render_count;
+            render_count = 0;
+            measured_game_fps = game_update_count;
+            game_update_count = 0;
+            fps_timer = now;
+        }
+						if(is_over)	break;
         if (Pause_ShouldReturnToMenu()) {
             Pause_ClearReturnFlag();
             break;
@@ -319,24 +402,26 @@ uint8_t battle_start()
         lv_timer_handler();
         delay_us(10);
     }
-		switch_to_level_select();
+    //switch to  pause mean for volume control
+	switch_to_level_select();
+    //free heap memory
     sdram_free(buf);
-		sdram_free(enemy_buffer);
-		sdram_free(player_buffer);
-		sdram_free(player_shield_buffer);
-		sdram_free(seek_buffer);
-		sdram_free(mine_buffer);
-		sdram_free(e1_shield_buf);
-		sdram_free(e1_plain_buf);
-		sdram_free(e2_ram_buf);
-		sdram_free(e3_carrier_buf);
-		sdram_free(e3_minion_buf);
-		sdram_free(boss1_buf);
-		sdram_free(boss2_buf);
-		sdram_free(boss3_buf);
-		sdram_free(boss4_buf);
-		lv_obj_clean(display_game);
-		display_game = NULL;
-		return is_over;
+	sdram_free(enemy_buffer);
+	sdram_free(player_buffer);
+	sdram_free(player_shield_buffer);
+	sdram_free(seek_buffer);
+	sdram_free(mine_buffer);
+	sdram_free(e1_shield_buf);
+	sdram_free(e1_plain_buf);
+	sdram_free(e2_ram_buf);
+	sdram_free(e3_carrier_buf);
+	sdram_free(e3_minion_buf);
+	sdram_free(boss1_buf);
+	sdram_free(boss2_buf);
+	sdram_free(boss3_buf);
+	sdram_free(boss4_buf);
+	lv_obj_clean(display_game);
+	display_game = NULL;
+	return is_over;
 }
 

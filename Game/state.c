@@ -12,6 +12,7 @@ int16_t pre_mine[MINE_POOL][2];
 int16_t control_x   = 0;
 int16_t control_y   = 0;
 int16_t player_knockback_timer = 0;
+int16_t player_attack_timer = 0;
 int16_t enemy_num         = 0;
 int16_t dispatch_cursor   = 0;
 int16_t player_mana       = 0;
@@ -43,22 +44,24 @@ struct BattleConfig config ={
 	2,    // mana_regen
 	50,   // mana_kill_bonus 
 	100,   // shield_duration 
-	500,   //player hp
+	1500,   //player hp
+	12,    // wave_count
 	{
     // norm shield ram carrier  min_frames     boss 
-        3,    3,     2,   0,        80,         4,
-        2,    1,     2,   0,        80,         0,
+        0,    0,     0,   0,        80,         0,
+        0,    0,     0,   0,        80,         0,
         0,    0,     0,   0,        20,         1,   
-        3,    3,     3,   0,        100,        0,
-        1,    1,     4,   1,        100,        0,
-        0,    0,     0,   0,        20,         2,   
+        0,    0,     0,   0,        100,        2,
+        0,    0,     4,   0,        100,        3,
+        0,    0,     0,   0,        20,         0,   
         2,    1,     4,   0,        100,        0,
         3,    1,     2,   1,        100,        0,
-        0,    0,     0,   0,        20,         3,  
+        0,    0,     0,   0,        20,         0,  
         3,    1,     4,   0,        100,        0,
         1,    2,     3,   1,        100,        0,
         0,    0,     0,   0,        20,         4, 
  }
+ //the max wave_count is 60
 };
 bool gaming = false;
 uint8_t is_over = false;

@@ -6,13 +6,45 @@ static lv_obj_t * win = NULL;
 static lv_obj_t * mask = NULL;
 static lv_obj_t * label_value;
 static lv_obj_t * slider_obj = NULL;
+static lv_obj_t * render_dropdown = NULL;
+static lv_obj_t * render_label = NULL;
+static lv_obj_t * speed_dropdown = NULL;
+static lv_obj_t * speed_label = NULL;
 static int32_t slider_value = 50;
+static uint8_t max_render_fps = 8;
+static uint16_t game_speed_percent = 100;
 static uint8_t pause_flag = 0;
 static uint8_t return_to_level_select_flag = 0;
 
 static uint8_t pause_open_request = 0;
 static char last_filename[256] = {0};
 static uint8_t need_restore_audio = 0;
+static const uint16_t speed_options_percent[] = { 50, 75, 100, 200, 300 };
+static const char render_fps_options[] =
+    "5 FPS\n6 FPS\n7 FPS\n8 FPS\n9 FPS\n10 FPS\n11 FPS\n12 FPS\n"
+    "13 FPS\n14 FPS\n15 FPS\n16 FPS\n17 FPS\n18 FPS\n19 FPS\n20 FPS";
+
+static uint16_t speed_percent_to_selected(uint16_t percent)
+{
+    for (uint16_t i = 0; i < sizeof(speed_options_percent) / sizeof(speed_options_percent[0]); i++) {
+        if (speed_options_percent[i] == percent)
+            return i;
+    }
+    return 2;
+}
+
+static void set_speed_label(void)
+{
+    if (game_speed_percent < 100)
+        lv_label_set_text_fmt(speed_label, "Speed: 0.%02dx", game_speed_percent);
+    else
+        lv_label_set_text_fmt(speed_label, "Speed: %dx", game_speed_percent / 100);
+}
+
+static void set_render_label(void)
+{
+    lv_label_set_text_fmt(render_label, "Max render FPS: %d", max_render_fps);
+}
 
 static void close_pause_window(uint8_t save)
 {
@@ -30,6 +62,10 @@ static void close_pause_window(uint8_t save)
         win = NULL;
         slider_obj = NULL;
         label_value = NULL;
+        render_dropdown = NULL;
+        render_label = NULL;
+        speed_dropdown = NULL;
+        speed_label = NULL;
     }
 }
 
@@ -51,6 +87,23 @@ static void slider_event_cb(lv_event_t * e)
     lv_obj_t * slider = lv_event_get_target(e);
     slider_value = lv_slider_get_value(slider);
     lv_label_set_text_fmt(label_value, "Volume: %d", slider_value);
+}
+
+static void render_dropdown_event_cb(lv_event_t * e)
+{
+    lv_obj_t * dropdown = lv_event_get_target(e);
+    max_render_fps = (uint8_t)lv_dropdown_get_selected(dropdown) + 5;
+    set_render_label();
+}
+
+static void speed_dropdown_event_cb(lv_event_t * e)
+{
+    lv_obj_t * dropdown = lv_event_get_target(e);
+    uint16_t selected = lv_dropdown_get_selected(dropdown);
+    if (selected >= sizeof(speed_options_percent) / sizeof(speed_options_percent[0]))
+        selected = 2;
+    game_speed_percent = speed_options_percent[selected];
+    set_speed_label();
 }
 
 //暂停窗口
@@ -106,6 +159,26 @@ static void open_pause(void)
     label_value = lv_label_create(cont);
     lv_label_set_text_fmt(label_value, "Volume: %d", slider_value);
 
+    render_dropdown = lv_dropdown_create(cont);
+    lv_dropdown_set_options_static(render_dropdown, render_fps_options);
+    lv_dropdown_set_selected(render_dropdown, max_render_fps - 5);
+    lv_obj_set_width(render_dropdown, 300);
+    lv_obj_add_event_cb(render_dropdown, render_dropdown_event_cb,
+                        LV_EVENT_VALUE_CHANGED, NULL);
+
+    render_label = lv_label_create(cont);
+    set_render_label();
+
+    speed_dropdown = lv_dropdown_create(cont);
+    lv_dropdown_set_options_static(speed_dropdown, "0.5x\n0.75x\n1x\n2x\n3x");
+    lv_dropdown_set_selected(speed_dropdown, speed_percent_to_selected(game_speed_percent));
+    lv_obj_set_width(speed_dropdown, 300);
+    lv_obj_add_event_cb(speed_dropdown, speed_dropdown_event_cb,
+                        LV_EVENT_VALUE_CHANGED, NULL);
+
+    speed_label = lv_label_create(cont);
+    set_speed_label();
+
     lv_obj_t * btn_cont = lv_obj_create(cont);
     lv_obj_set_size(btn_cont, LV_PCT(80), LV_SIZE_CONTENT);
     lv_obj_set_style_bg_opa(btn_cont, LV_OPA_TRANSP, 0);
@@ -152,6 +225,22 @@ void EXTI2_IRQHandler(void)
 uint8_t Pause_IsActive(void)
 {
     return pause_flag;
+}
+
+uint8_t Pause_GetMaxRenderFps(void)
+{
+    if (max_render_fps < 5)
+        max_render_fps = 5;
+    if (max_render_fps > 20)
+        max_render_fps = 20;
+    return max_render_fps;
+}
+
+uint16_t Pause_GetGameSpeedPercent(void)
+{
+    if (game_speed_percent == 0)
+        game_speed_percent = 100;
+    return game_speed_percent;
 }
 
 uint8_t Pause_ShouldReturnToMenu(void)

@@ -15,6 +15,8 @@ extern lv_obj_t* display_game;
 
 void PB2_Key_Init(void);
 uint8_t Pause_IsActive(void);
+uint8_t Pause_GetMaxRenderFps(void);
+uint16_t Pause_GetGameSpeedPercent(void);
 uint8_t Pause_ShouldReturnToMenu(void);
 void Pause_ClearReturnFlag(void);
 void Pause_HandleRequest(void);

@@ -1,12 +1,13 @@
 #include "battle.h"
 #include "key.h"
+//read stick input
 int16_t read_stick(uint16_t x)
 {
     if (x >= 1448 && x <= 2648)
         return 0;
     return ((int16_t)x) - 2048;
 }
-
+//update normal bullets
 void update_bullet_norm(struct Bullet *bullet_pool)
 {
     for (int16_t i = 0; i < BULLET_POOL; i++) {
@@ -19,7 +20,7 @@ void update_bullet_norm(struct Bullet *bullet_pool)
         }
     }
 }
-
+//update enemy bullets
 void update_ebullet_norm(struct Bullet *bullet_pool)
 {
     for (int16_t i = 0; i < EBULLET_POOL; i++) {
@@ -32,7 +33,7 @@ void update_ebullet_norm(struct Bullet *bullet_pool)
         }
     }
 }
-
+//update seek bullets:mamnge all the v and pos of seek bullets
 void update_sbullet(struct Bullet *sbullet_pool, struct Enemy **seek_objects,
                     struct Enemy *enemy_pool)
 {
@@ -79,7 +80,7 @@ void update_sbullet(struct Bullet *sbullet_pool, struct Enemy **seek_objects,
         }
     }
 }
-
+//limit and restore mana
 void update_mana(void)
 {
     if (player_mana < config.max_mana)
@@ -89,8 +90,7 @@ void update_mana(void)
 }
 
 
-
-
+//movement,nomal attack(gap),skills,game over,knockback,
 void update_player(struct Player *player, struct Bullet *bullet_pool,
                    struct Bullet *sbullet_pool, struct Enemy **seek_objects,
                    struct Enemy *enemy_pool, struct Mine *mine_pool)
@@ -98,7 +98,7 @@ void update_player(struct Player *player, struct Bullet *bullet_pool,
     if (key_value == KEY_S2) {
         bullet_pattern ^= 1;
     }
-		if (player->health < 0) is_over = 1;
+	if (player->health < 0) is_over = 1;
     if (player_shield_timer > 0)
         player_shield_timer--;
     if (player->v_x * control_x < 0)
@@ -113,9 +113,8 @@ void update_player(struct Player *player, struct Bullet *bullet_pool,
         player->x = new_x;
     if (new_y > 0 && new_y < 540)
         player->y = new_y;
-    static int16_t times = 0;
-    times++;
-    if (times % config.attack_gap == 0) {
+    player_attack_timer++;
+    if (player_attack_timer % config.attack_gap == 0) {
         uint8_t pattern = bullet_pattern;
         for (int i = 0; i < config.bullet_num[pattern]; i++) {
             create_bullet_v(bullet_pool, BULLET_POOL, B_NORM, player->x + P_W,
@@ -129,14 +128,14 @@ void update_player(struct Player *player, struct Bullet *bullet_pool,
         player_shield_timer = config.shield_duration;
     }
     if (key_value == KEY_S4 && player_mana >= config.mine_cost) {
-        player_mana -= config.mine_cost;
-        create_mine(mine_pool, player->x + P_W / 2 - MINE_W / 2,
-										player->y + P_H / 2 - MINE_H / 2);
+        if (create_mine(mine_pool, player->x + P_W / 2 - MINE_W / 2,
+                        player->y + P_H / 2 - MINE_H / 2) != 0)
+            player_mana -= config.mine_cost;
     }
     if (key_value == KEY_S5 && player_mana >= config.seek_cost) {
-        player_mana -= config.seek_cost;
-        create_sbullet(sbullet_pool, seek_objects, enemy_pool, player->x + P_W,
-                       player->y + P_H / 2);
+        if (create_sbullet(sbullet_pool, seek_objects, enemy_pool, player->x + P_W,
+                           player->y + P_H / 2) != 0)
+            player_mana -= config.seek_cost;
     }
     if (control_x == 0 && control_y == 0 && player_knockback_timer == 0) {
         player->v_x /= 2;
@@ -182,9 +181,9 @@ static void update_enemy_norm(struct Enemy *e, struct Bullet *ebullet_pool)
 static void update_enemy_shield(struct Enemy *e, struct Bullet *ebullet_pool)
 {
     if (rand() % 2)
-        e->v_x += rand() % 8;
+        e->v_x += rand() % 12;
     else
-        e->v_x -= rand() % 8;
+        e->v_x -= rand() % 12;
     if (rand() % 2)
         e->v_y += rand() % 6;
     else
@@ -241,12 +240,39 @@ static void update_enemy_carrier(struct Enemy *e, struct Enemy *enemy_pool,
     }
 }
 
-static void update_enemy_minion(struct Enemy *e, struct Bullet *ebullet_pool)
+static void create_aimed_ebullet(struct Bullet *ebullet_pool,
+                                 int16_t sx, int16_t sy,
+                                 int16_t tx, int16_t ty,
+                                 int16_t speed)
+{
+    int32_t dx = tx - sx;
+    int32_t dy = ty - sy;
+    int32_t adx = dx < 0 ? -dx : dx;
+    int32_t ady = dy < 0 ? -dy : dy;
+    int16_t vx;
+    int16_t vy;
+
+    if (adx == 0 && ady == 0) {
+        vx = -speed;
+        vy = 0;
+    } else if (adx >= ady) {
+        vx = dx < 0 ? -speed : speed;
+        vy = (int16_t)(dy * speed / adx);
+    } else {
+        vx = (int16_t)(dx * speed / ady);
+        vy = dy < 0 ? -speed : speed;
+    }
+
+    create_bullet_v(ebullet_pool, EBULLET_POOL, B_NORM, sx, sy, vx, vy);
+}
+
+static void update_enemy_minion(struct Enemy *e, struct Bullet *ebullet_pool,
+                                struct Player *player)
 {
     if (rand() % 2)
-        e->v_x += rand() % 12;
+        e->v_x += rand() % 8;
     else
-        e->v_x -= rand() % 12;
+        e->v_x -= rand() % 8;
     if (rand() % 2)
         e->v_y += rand() % 10;
     else
@@ -259,7 +285,10 @@ static void update_enemy_minion(struct Enemy *e, struct Bullet *ebullet_pool)
     e->y += e->v_y;
     e->frame += 1;
     if (e->frame % 14 == 0) {
-        create_bullet(ebullet_pool, EBULLET_POOL, B_NORM, e->x, e->y);
+        create_aimed_ebullet(ebullet_pool,
+                             e->x, e->y + E3M_H / 2,
+                             player->x + P_W / 2, player->y + P_H / 2,
+                             30);
         e->frame = 1;
     }
 }
@@ -271,10 +300,10 @@ static void update_boss1(struct Enemy *e, struct Enemy *enemy_pool,
         e->v_x = (rand() % 11) - 5;
         e->v_y = (rand() % 11) - 5;
     }
-    if (e->x < 600) e->v_x = 4;
-    if (e->x > 900) e->v_x = -4;
-    if (e->y < 20)  e->v_y = 3;
-    if (e->y > 380) e->v_y = -3;
+    if (e->x < 600) e->v_x = 10;
+    if (e->x > 900) e->v_x = -10;
+    if (e->y < 20)  e->v_y = 10;
+    if (e->y > 380) e->v_y = -10;
     e->x += e->v_x;
     e->y += e->v_y;
     e->frame += 1;
@@ -304,10 +333,10 @@ static void update_boss2(struct Enemy *e, struct Enemy *enemy_pool,
         e->v_x = (rand() % 9) - 4;
         e->v_y = (rand() % 9) - 4;
     }
-    if (e->x < 600) e->v_x = 4;
-    if (e->x > 900) e->v_x = -4;
-    if (e->y < 10)  e->v_y = 3;
-    if (e->y > 340) e->v_y = -3;
+    if (e->x < 600) e->v_x = 10;
+    if (e->x > 900) e->v_x = -10;
+    if (e->y < 10)  e->v_y = 10;
+    if (e->y > 340) e->v_y = -10;
     e->x += e->v_x;
     e->y += e->v_y;
     e->frame += 1;
@@ -336,35 +365,40 @@ static void update_boss3(struct Enemy *e, struct Enemy *enemy_pool,
         e->v_x = (rand() % 9) - 4;
         e->v_y = (rand() % 9) - 4;
     }
-    if (e->x < 600) e->v_x = 4;
-    if (e->x > 900) e->v_x = -4;
-    if (e->y < 20)  e->v_y = 3;
-    if (e->y > 380) e->v_y = -3;
+    if (e->x < 600) e->v_x = 10;
+    if (e->x > 900) e->v_x = -10;
+    if (e->y < 20)  e->v_y = 10;
+    if (e->y > 380) e->v_y = -10;
     e->x += e->v_x;
     e->y += e->v_y;
     e->frame += 1;
 
 
-    if (e->frame % 5 == 0 && (rand() % 2)) {
+    if (e->frame % 5 == 0) {
         int16_t cy = e->y + BOSS3_H / 2;
-        int16_t spreads[5][2] = {
-            {-26,  0}, {-24, -10}, {-24, 10}, {-22, -18}, {-22, 18}
+        int16_t spreads[8][2] = {
+            {-22, -18}, {-23, -13}, {-24, -8}, {-26, -3},
+            {-26,   3}, {-24,   8}, {-23, 13}, {-22, 18}
         };
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 8; i++)
             create_bullet_v(ebullet_pool, EBULLET_POOL, B_NORM,
                             e->x, cy, spreads[i][0], spreads[i][1]);
     }
 
     e->spawn_timer += 1;
-    if (e->spawn_timer >= 50 && (rand() % 3) == 0 && enemy_num < 12) {
-        int16_t y = 80 + (rand() % 400);
-        create_enemy(enemy_pool, E_RAM, e->x, y);
+    if (e->spawn_timer >= 10 && (rand() % 3) == 0 && enemy_num < 12) {
+        int16_t y1 = 100 + (rand() % 100);   
+        int16_t y2 = 300 + (rand() % 100);
+        int16_t y3 = 400 + (rand() % 100);
+        create_enemy(enemy_pool, E_RAM, e->x, y1);
+        create_enemy(enemy_pool, E_RAM, e->x, y2);
+        create_enemy(enemy_pool, E_RAM, e->x, y3);
         e->spawn_timer = 0;
     }
 }
 
 static void update_boss4(struct Enemy *e, struct Enemy *enemy_pool,
-                         struct Bullet *ebullet_pool)
+                         struct Bullet *ebullet_pool, struct Player *player)
 {
     e->frame += 1;
     if (e->spawn_timer > 0) {
@@ -392,25 +426,26 @@ static void update_boss4(struct Enemy *e, struct Enemy *enemy_pool,
         e->v_x = (rand() % 9) - 4;
         e->v_y = (rand() % 9) - 4;
     }
-    if (e->x < 600) e->v_x = 4;
-    if (e->x > 900) e->v_x = -4;
-    if (e->y < 20)  e->v_y = 3;
-    if (e->y > 350) e->v_y = -3;
+    if (e->x < 600) e->v_x = 10;
+    if (e->x > 900) e->v_x = -10;
+    if (e->y < 20)  e->v_y = 10;
+    if (e->y > 350) e->v_y = -10;
     e->x += e->v_x;
     e->y += e->v_y;
 
-    if (e->frame % 5 == 0 && (rand() % 2)) {
-        int16_t vx = -24 - (rand() % 6);
-        int16_t vy = (rand() % 25) - 12;
-        create_bullet_v(ebullet_pool, EBULLET_POOL, B_NORM,
-                        e->x, e->y + BOSS4_H / 2, vx, vy);
+    if (e->frame % 2 == 0 && (rand() % 2)) {
+        create_aimed_ebullet(ebullet_pool,
+                             e->x, e->y + BOSS4_H / 2,
+                             player->x + P_W / 2, player->y + P_H / 2,
+                             28);
     }
     if (e->spawn_timer == 0 && e->frame > 40 && (rand() % 90) == 0) {
         e->spawn_timer = BOSS4_CHARGES;
     }
 }
 
-void update_enemy(struct Enemy *enemy, struct Bullet *ebullet_pool)
+void update_enemy(struct Enemy *enemy, struct Bullet *ebullet_pool,
+                  struct Player *player)
 {
     for (int16_t i = 0; i < ENEMY_POOL; i++) {
         if (!enemy[i].is_used)
@@ -433,7 +468,7 @@ void update_enemy(struct Enemy *enemy, struct Bullet *ebullet_pool)
             update_enemy_carrier(&enemy[i], enemy, ebullet_pool);
             break;
         case E_MINION:
-            update_enemy_minion(&enemy[i], ebullet_pool);
+            update_enemy_minion(&enemy[i], ebullet_pool, player);
             break;
         case E_BOSS1:
             update_boss1(&enemy[i], enemy, ebullet_pool);
@@ -445,7 +480,7 @@ void update_enemy(struct Enemy *enemy, struct Bullet *ebullet_pool)
             update_boss3(&enemy[i], enemy, ebullet_pool);
             break;
         case E_BOSS4:
-            update_boss4(&enemy[i], enemy, ebullet_pool);
+            update_boss4(&enemy[i], enemy, ebullet_pool, player);
             break;
         default:
             update_enemy_norm(&enemy[i], ebullet_pool);
@@ -457,11 +492,22 @@ void update_enemy(struct Enemy *enemy, struct Bullet *ebullet_pool)
 
 void enemy_dispatcher(struct Enemy *enemy_pool)
 {
+    //the y pos of ram lanes
     static const int16_t ram_lanes[RAM_LANE_COUNT] = { 60, 140, 220, 300, 380, 460 };
+    uint16_t dispatch_rows = config.wave_count;
 
-    if (dispatch_cursor >= DISPATCH_LEN) {
-        dispatch_cursor = 0;
+    if (dispatch_rows == 0) {
+        is_over = 2;
+        return;
+    }
+    if (dispatch_rows > DISPATCH_ROWS)
+        dispatch_rows = DISPATCH_ROWS;
+
+    uint16_t dispatch_end = dispatch_rows * DISPATCH_COLS;
+    if (dispatch_cursor >= dispatch_end) {
         round_timer = 0;
+        is_over = 2;
+        return;
     }
     int16_t *slot = config.enemy_dispatch + dispatch_cursor;
     int16_t boss_type   = slot[5];
@@ -505,6 +551,8 @@ void enemy_dispatcher(struct Enemy *enemy_pool)
     if (round_timer >= min_frames && !boss_alive && enemy_num <= 2) {
         dispatch_cursor += DISPATCH_COLS;
         round_timer = 0;
+        if (dispatch_cursor >= dispatch_end)
+            is_over = 2;
     }
 }
 

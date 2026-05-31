@@ -61,7 +61,7 @@
 
 #define BOSS4_CHARGES 3
 
-#define DISPATCH_ROWS 12
+#define DISPATCH_ROWS 60
 #define DISPATCH_COLS 6
 #define DISPATCH_LEN  (DISPATCH_ROWS * DISPATCH_COLS)
 
@@ -85,6 +85,7 @@ struct BattleConfig{
 	uint16_t mana_kill_bonus;
 	uint16_t shield_duration;
 	uint16_t player_hp;
+	uint16_t wave_count;
 	int16_t enemy_dispatch[DISPATCH_LEN];
 };
 enum Enemy_types {
@@ -161,6 +162,7 @@ extern int16_t control_y;
 extern uint8_t key_value;
 extern uint8_t bullet_pattern;
 extern int16_t player_knockback_timer;
+extern int16_t player_attack_timer;
 
 extern int16_t enemy_num;
 extern int16_t dispatch_cursor;
@@ -198,7 +200,7 @@ void collision_detect(struct Player *player, struct Enemy *enemy_pool,
                       struct Bullet *bullet_pool, struct Bullet *ebullet_pool,
                       struct Bullet *sbullet_pool, struct Mine *mine_pool);
 
-void create_mine(struct Mine *mine_pool, int16_t x, int16_t y);
+struct Mine *create_mine(struct Mine *mine_pool, int16_t x, int16_t y);
 void update_mana(void);
 
 int16_t is_in(int16_t x, int16_t y, int16_t w, int16_t h,
@@ -229,7 +231,8 @@ void update_player(struct Player *player, struct Bullet *bullet_pool,
                    struct Bullet *sbullet_pool, struct Enemy **seek_objects,
                    struct Enemy *enemy_pool, struct Mine *mine_pool);
 
-void update_enemy(struct Enemy *enemy, struct Bullet *ebullet_pool);
+void update_enemy(struct Enemy *enemy, struct Bullet *ebullet_pool,
+                  struct Player *player);
 
 void enemy_dispatcher( struct Enemy *enemy_pool);
 

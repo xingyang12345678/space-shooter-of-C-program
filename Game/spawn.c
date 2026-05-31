@@ -1,5 +1,6 @@
 #include "battle.h"
 
+//create enemy
 struct Enemy *create_enemy(struct Enemy *enemy_pool, enum Enemy_types type,
                            int16_t x, int16_t y)
 {
@@ -54,7 +55,7 @@ struct Enemy *create_enemy(struct Enemy *enemy_pool, enum Enemy_types type,
     }
     return 0;
 }
-
+//create bullets with v 
 struct Bullet *create_bullet_v(struct Bullet *bullet_pool, int16_t pool_size,
                                enum Bullet_types type,
                                int16_t x, int16_t y, int16_t vx, int16_t vy)
@@ -73,13 +74,13 @@ struct Bullet *create_bullet_v(struct Bullet *bullet_pool, int16_t pool_size,
     }
     return 0;
 }
-
+//create bullets with v = -30, 0
 struct Bullet *create_bullet(struct Bullet *bullet_pool, int16_t pool_size,
                              enum Bullet_types type, int16_t x, int16_t y)
 {
     return create_bullet_v(bullet_pool, pool_size, type, x, y, -30, 0);
 }
-
+//create seek bullets
 struct Bullet *create_sbullet(struct Bullet *sbullet_pool, struct Enemy **seek_objects,
                               struct Enemy *enemey_pool, int16_t x, int16_t y)
 {
@@ -89,6 +90,7 @@ struct Bullet *create_sbullet(struct Bullet *sbullet_pool, struct Enemy **seek_o
             sbullet_pool[i].x       = x;
             sbullet_pool[i].y       = y;
             sbullet_pool[i].type    = B_SEEK;
+            seek_objects[i]         = 0;
             for (int j = 0; j < ENEMY_POOL; j++) {
                 if (enemey_pool[j].is_used) {
                     seek_objects[i] = &enemey_pool[j];
@@ -102,16 +104,17 @@ struct Bullet *create_sbullet(struct Bullet *sbullet_pool, struct Enemy **seek_o
     }
     return 0;
 }
-
-void create_mine(struct Mine *mine_pool, int16_t x, int16_t y)
+//create mine
+struct Mine *create_mine(struct Mine *mine_pool, int16_t x, int16_t y)
 {
     for (int i = 0; i < MINE_POOL; i++) {
         if (!mine_pool[i].is_used) {
             mine_pool[i].is_used = 1;
             mine_pool[i].x = x;
             mine_pool[i].y = y;
-            return;
+            return &mine_pool[i];
         }
     }
+    return 0;
 }
 
